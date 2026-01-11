@@ -11,7 +11,11 @@ def details():
     return jsonify({
         'time': '' + datetime.datetime.utcnow().isoformat() + 'Z',
         'hostname': '' + socket.gethostname() + '',
+<<<<<<< HEAD
         'message': 'you are doing great human! !'
+=======
+        'message': 'you are doing great human! ! !'
+>>>>>>> 26ee977 (gitignore)
     })
 
 @app.route('/api/v1/healthz')

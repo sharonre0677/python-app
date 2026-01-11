@@ -9,7 +9,7 @@ on:
 
 jobs:
   docker:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted-runner
     steps:
       - name: shorten commit id
         shell: bash
