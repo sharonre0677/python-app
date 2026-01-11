@@ -9,7 +9,7 @@ on:
 
 jobs:
   docker:
-    runs-on: self-hosted-runner
+    runs-on: python-runner
     steps:
       - name: shorten commit id
         shell: bash
