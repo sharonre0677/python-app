@@ -11,7 +11,7 @@ def details():
     return jsonify({
         'time': '' + datetime.datetime.utcnow().isoformat() + 'Z',
         'hostname': '' + socket.gethostname() + '',
-        'message': 'you are doing great human!!!! ' 
+        'message': 'you are doing great human!!!! !!' 
 
     })
 
