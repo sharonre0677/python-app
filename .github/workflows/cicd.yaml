@@ -37,12 +37,21 @@ jobs:
     needs: ci
     runs-on: python-runner
     steps:
-      - name: Install argocd
+      - name: Install ArgoCD CLI
         shell: bash
-        run: | 
-          curl -ksSL -o https://argocd-server.argocd/download/argocd-linux-amd64
-          chmod +x
-          mv ./argocd /usr/local/bin/argocd
+        run: |
+          # 1. Download the binary (added -o argocd)
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          
+          # 2. Make it executable
+          chmod +x argocd
+          
+          # 3. Move to a directory in your PATH 
+          # Use 'sudo' if your runner image requires it, or just keep it local
+          sudo mv argocd /usr/local/bin/argocd
+          
+          # 4. Verify installation
+          argocd version --client
       - name: Argocd app sync
         shell: bash
         run: |
