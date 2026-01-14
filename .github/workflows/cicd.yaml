@@ -9,6 +9,7 @@ on:
 
 jobs:
   ci:
+    
     runs-on: ubuntu-latest
     steps:
       - name: shorten commit id
@@ -33,10 +34,37 @@ jobs:
         with:
           push: true
           tags: sharonre/python-app:${{ env.COMMIT_ID }}
+    outputs:
+      commit_id1: ${{ env.COMMIT_ID }} 
   cd:
     needs: ci
     runs-on: python-runner
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - uses: actions/checkout@v3    
+
+      - name: modify values file
+        shell: bash
+        run:
+          echo ${{needs.ci.outputs.commit_id1}}
+          pip install yq
+          yq -Yi '.image.tag = ${{needs.ci.outputs.commit_id1}}' charts/python-app/values.yaml
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'Updates values.yaml with commit ${{needs.ci.outputs.commit_id1}}'   
+
+
       - name: Install ArgoCD CLI
         shell: bash
         run: |
