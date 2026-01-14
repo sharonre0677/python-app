@@ -5,29 +5,23 @@ on:
     paths:
       - src/**
     branches:
-      - main  
+      - main
 
 jobs:
   ci:
-    
     runs-on: ubuntu-latest
     steps:
-      - name: shorten commit id
+
+      - name: Shorten commit id
         shell: bash
         run: |
           echo "COMMIT_ID=${GITHUB_SHA::6}" >> "$GITHUB_ENV"
-        
       -
         name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-     
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       -
         name: Build and push
         uses: docker/build-push-action@v6
@@ -35,59 +29,40 @@ jobs:
           push: true
           tags: sharonre/python-app:${{ env.COMMIT_ID }}
     outputs:
-      commit_id1: ${{ env.COMMIT_ID }} 
+      commit_id: ${{ env.COMMIT_ID }}
+
   cd:
     needs: ci
-    runs-on: python-runner
+    runs-on: self-hosted
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          
-      
-      - uses: actions/checkout@v3    
 
-      - name: modify values file
+      - uses: actions/checkout@v3
+
+      - name: Modify values file
         shell: bash
-        run:
-          echo ${{needs.ci.outputs.commit_id1}}
+        run: |
+          echo ${{needs.ci.outputs.commit_id}}
           pip install yq
-          yq -Yi '.image.tag = ${{needs.ci.outputs.commit_id1}}' charts/python-app/values.yaml
+          yq -Yi '.image.tag = "${{needs.ci.outputs.commit_id}}"' charts/python-app/values.yaml
 
       - name: Commit changes
         uses: EndBug/add-and-commit@v9
         with:
-          message: 'Updates values.yaml with commit ${{needs.ci.outputs.commit_id1}}'   
+          message: 'Updates values.yaml with commit ${{needs.ci.outputs.commit_id}}'
 
-
-      - name: Install ArgoCD CLI
+      - name: Install argocd
         shell: bash
         run: |
-          # 1. Download the binary (added -o argocd)
-          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          
-          # 2. Make it executable
+          curl -ksSL -o argocd https://argocd-server.argocd/download/argocd-linux-amd64
           chmod +x argocd
-          
-          # 3. Move to a directory in your PATH 
-          # Use 'sudo' if your runner image requires it, or just keep it local
-          sudo mv argocd /usr/local/bin/argocd
-          
-          # 4. Verify installation
-          argocd version --client
+          sudo mv ./argocd /usr/local/bin/argocd
+
       - name: Argocd app sync
         shell: bash
         run: |
           argocd login argocd-server.argocd \
-            --insecure \
+            --insecure  \
             --grpc-web \
-            --username admin --password ${{ secrets.ARGOCD_PASSWORD }}
+            --username admin \
+            --password  ${{ secrets.ARGOCD_PASSWORD }}
           argocd app sync python-app
-          
-        
-      
